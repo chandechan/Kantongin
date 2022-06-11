@@ -18,9 +18,15 @@ been made so far simply by looking at each expense history in the application wh
 surprised to find out where their money has been used.
 
 ## Team Member
-- Rasyiddin Permanaputra (M2227F2099) - Machine Learning - Universitas Jember
-- Fajarudin Hidayat (M2229G2106) - Machine Learning - Universitas Jenderal Soedirman
-- Dede Chandra Wijaya (M7012F1307) - Machine Learning - Universitas Telkom
-- Muhamad Fildzah Rake Maqomi (A7401G2965) - Mobile Development  - Institut Teknologi Nasional Malang
-- Alfian Fahrul Yuliansyah (C7014J1376) - Cloud Computing - Universitas Udayana
-- Juli Astama (C2310H2662) - Cloud Computing - Universitas Samudra
+- Machine Learning
+  - Rasyiddin Permanaputra (M2227F2099) - Universitas Jember
+  - Fajarudin Hidayat (M2229G2106) - Universitas Jenderal Soedirman
+  - Dede Chandra Wijaya (M7012F1307) - Universitas Telkom
+- Mobile Development
+  - Muhamad Fildzah Rake Maqomi (A7401G2965) - Institut Teknologi Nasional Malang
+- Cloud Computing
+  - Alfian Fahrul Yuliansyah (C7014J1376) - Universitas Udayana
+  - Juli Astama (C2310H2662) - Universitas Samudra
+
+
+
