@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:background="@color/blue_baby"
+    tools:context=".fragment.AvatarFragment">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="20dp">
+
+        <TextView
+            android:id="@+id/label_avatar"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:text="Pilih Avatar"
+            android:textColor="@color/blue_navy"
+            android:textSize="24sp"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"/>
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/list_avatar"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:text="Pilih Avatar"
+            tools:listitem="@layout/adapter_avatar"
+            app:layoutManager="androidx.recyclerview.widget.GridLayoutManager"
+            app:spanCount="3"
+            android:layout_marginTop="10dp"
+            android:textColor="@color/blue_navy"
+            android:textSize="24sp"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/label_avatar"/>
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+</FrameLayout>

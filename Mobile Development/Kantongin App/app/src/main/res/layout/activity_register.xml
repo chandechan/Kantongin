@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/blue_navy"
+    android:padding="20dp"
+    tools:context=".register.RegisterActivity">
+
+    <ImageView
+        android:id="@+id/logo_login"
+        android:layout_width="200dp"
+        android:layout_height="200dp"
+        android:src="@drawable/logo_login_register"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+    <TextView
+        android:id="@+id/label_title"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="20dp"
+        android:text="Selamat Datang!"
+        android:textSize="32sp"
+        android:textColor="@color/white"
+        android:textStyle="bold"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/logo_login"/>
+    <TextView
+        android:id="@+id/label_subtitle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Buat akun dengan username, email, dan password kamu sebelum menggunakan kantongmu"
+        android:textSize="15sp"
+        android:textColor="@color/white"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/label_title"/>
+    <EditText
+        android:id="@+id/edit_username"
+        android:layout_width="match_parent"
+        android:layout_height="55dp"
+        android:hint="Username kamu"
+        android:layout_marginTop="20dp"
+        android:textSize="15sp"
+        android:padding="15dp"
+        android:drawableStart="@drawable/ic_person"
+        android:textColor="@color/white"
+        android:textColorHint="@color/white"
+        android:background="@drawable/border_edit"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/label_subtitle"/>
+    <EditText
+        android:id="@+id/edit_email"
+        android:layout_width="match_parent"
+        android:layout_height="55dp"
+        android:hint="Email kamu"
+        android:layout_marginTop="10dp"
+        android:textSize="15sp"
+        android:padding="15dp"
+        android:drawableStart="@drawable/ic_email"
+        android:textColor="@color/white"
+        android:textColorHint="@color/white"
+        android:background="@drawable/border_edit"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/edit_username"/>
+    <EditText
+        android:id="@+id/edit_password"
+        android:layout_width="match_parent"
+        android:layout_height="55dp"
+        android:hint="Password kamu"
+        android:inputType="textPassword"
+        android:layout_marginTop="10dp"
+        android:textSize="15sp"
+        android:padding="15dp"
+        android:drawableStart="@drawable/ic_lock"
+        android:textColor="@color/white"
+        android:textColorHint="@color/white"
+        android:background="@drawable/border_edit"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/edit_email"/>
+    <TextView
+        android:visibility="gone"
+        tools:visibility="visible"
+        android:id="@+id/text_alert"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="5dp"
+        android:text="Username sudah digunakan"
+        android:textSize="12sp"
+        android:textColor="@android:color/holo_red_light"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:gravity="center"
+        app:layout_constraintTop_toBottomOf="@id/edit_password"/>
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/button_register"
+        android:layout_width="0dp"
+        android:layout_height="55dp"
+        android:layout_marginTop="20dp"
+        android:backgroundTint="@color/blue_baby"
+        android:textColor="@color/blue_navy"
+        android:text="Buat Akun"
+        app:cornerRadius="10dp"
+        android:layout_marginEnd="3dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/text_alert"/>
+    <ProgressBar
+        android:visibility="gone"
+        tools:visibility="visible"
+        android:id="@+id/progress"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="5dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/button_register"/>
+    <TextView
+        android:id="@+id/label_login"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_margin="5dp"
+        android:text="Sudah punya akun?"
+        android:textSize="15sp"
+        android:textColor="@color/white"
+        app:layout_constraintStart_toStartOf="parent"
+        android:gravity="center"
+        app:layout_constraintBottom_toBottomOf="parent"/>
+    <TextView
+        android:id="@+id/text_login"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:padding="5dp"
+        android:text="Masuk"
+        android:textSize="15sp"
+        android:textStyle="bold"
+        android:textColor="@color/tone_light"
+        app:layout_constraintStart_toEndOf="@id/label_login"
+        android:gravity="center"
+        app:layout_constraintBottom_toBottomOf="parent"/>
+
+</androidx.constraintlayout.widget.ConstraintLayout>
