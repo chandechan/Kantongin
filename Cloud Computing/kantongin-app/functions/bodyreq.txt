@@ -1,0 +1,75 @@
+// GET
+
+// POST 
+{
+    "amount": number,
+    "type": string (IN/OUT),
+    "category": user choice,
+    "date": timestamp,
+    "note": string
+}
+
+// PUT
+{
+    "noteId": string (unique),
+    "amount": number,
+    "type": string (IN/OUT),
+    "category": user choice,
+    "date": timestamp,
+    "note": string
+}
+
+// DELETE
+{
+    "noteId": string (unique)
+}
+
+// Wishlist
+// POST
+{
+    "name": string,
+    "quantity": number,
+    "price": number,
+    "date": timestamp,
+    "status": boolean
+}
+
+// PUT
+{
+    "wishId": string,
+    "name": string,
+    "quantity": number,
+    "price": number,
+    "date": timestamp,
+    "status": boolean
+}
+
+// DELETE
+{
+    "wishId": string
+}
+
+// Payment
+// POST
+{
+    "name": string,
+    "quantity": number,
+    "price": number,
+    "date": timestamp,
+    "status": boolean
+}
+
+// PUT
+{
+    "wishId": string,
+    "name": string,
+    "quantity": number,
+    "price": number,
+    "date": timestamp,
+    "status": boolean
+}
+
+// DELETE
+{
+    "wishId": string
+}

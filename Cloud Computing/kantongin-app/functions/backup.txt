@@ -1,0 +1,421 @@
+const functions = require('firebase-functions');    // Firebase Functions SDK
+const express = require('express');                 // Express web server framework
+const cors = require('cors');                       // Enable CORS for all routes
+const admin = require('firebase-admin');            // Firebase Admin SDK
+const kantonginApp = express();                     // Create a new Express application
+const bodyParser = require('body-parser');          // Parse JSON bodies (as sent by API clients)
+
+admin.initializeApp();                              
+kantonginApp.use(cors({ origin: true }), bodyParser.json());
+const firestoreDB = admin.firestore();
+
+/*  const appAuth = require('./appAuth');
+    app.use(appAuth);
+*/
+
+kantonginApp.post('/register', async (req, res) => {    // Register a new user
+    const { username, email, password } = req.body;
+    const targetEmail = firestoreDB.collection('kantongin-user-cred').doc(`${email}`);
+    const checkEmail = await targetEmail.get();
+
+    if (!email || !password) {
+        res.status(400).json({ success: false, message: 'Please provide an email and password' });
+    } else if (checkEmail.exists) {
+        res.status(400).json({ success: false, message: 'Email already exists' });
+    } else {
+        await targetEmail.set({
+            username, email, password, createdAt: new Date()
+        });
+        res.status(201).json({ success: true, message: 'Account created successfully' });
+    };
+});
+
+kantonginApp.post('/login', async (req, res) => {       // Login a user
+    const { email, password } = req.body;
+    const targetEmail = firestoreDB.collection('kantongin-user-cred').doc(`${email}`);
+    const checkEmail = await targetEmail.get();
+
+    if (!email || !password) {
+        res.status(400).json({ success: false, message: 'Please provide an email and password' });
+    } else if (!checkEmail.exists) {
+        res.status(400).json({ success: false, message: 'Account does not exist' });
+    } else {
+        const user = await targetEmail.get();
+        const userData = user.data();
+        if (userData.password === password) {
+            res.status(200).json({
+                 success: true,
+                 message: 'Login successful',
+                    user: {
+                        username: userData.username,
+                        email: userData.email,
+                        createdAt: userData.createdAt
+                    }
+                 });
+        } else {
+            res.status(400).json({ success: false, message: 'Incorrect password' });
+        };
+    };
+});
+
+
+kantonginApp.post('/kantongku/:id', async (req, res) => {   // create notes kantongku
+    const { note, amount, type, tags, date } = req.body;
+    const createdAt = new Date().toISOString();
+    const noteId = `${createdAt}-${type}-${tags}`;
+    const userId = req.params.id;
+
+    if (note && amount && type && tags && date !== undefined) {
+        const noteChar = note.length;
+        const noteLimit = 200;
+
+        if (noteChar > noteLimit) {
+            res.status(400).send({
+                success: false,
+                message: 'Note is too long'
+            });
+        } else if (amount.type !== 'number') {
+            res.status(400).send({
+                success: false,
+                message: 'Amount is not a number'
+            });
+        } else if (type !== 'IN' || type !== 'EX') {
+            res.status(400).send({
+                success: false,
+                message: 'Type is not valid'
+            });
+        };
+
+        const newNote = {
+            "note": note,
+            "amount": amount,
+            "type": type,
+            "tags": tags,
+            "date": date
+        };
+
+        await firestoreDB.collection(`kantongku-db/users/${userId}`).doc(`${noteId}`).set(newNote);
+        res.status(201).send({
+            success: true,
+            message: 'Note added successfully'
+        });
+    };
+
+    res.status(400).send({
+        success: false,
+        message: 'Please provide all required fields'
+    });
+});
+
+kantonginApp.get('/kantongku/:id', async (req, res) => {    // read data kantongku
+    const userId = req.params.id;
+    const userNotes = await firestoreDB.collection(`kantongku-db/users/${userId}`).get();
+
+    let notes = [];
+    userNotes.forEach(doc => {
+        let id = doc.id;
+        let data = doc.data();
+        notes.push({
+            id, ...data
+        });
+    });
+
+    res.status(200).send(JSON.stringify(notes));
+
+/*
+    if (notes !== undefined) {
+        res.status(200).send(JSON.stringify(notes));
+    } else {
+        res.status(400).send({
+            success: false,
+            message: 'No notes found'
+        });
+    };
+*/
+
+});
+
+kantonginApp.put('/kantongku/:id', async (req, res) => {    // update data kantongku
+    const { noteId, note, amount, type, tags, date } = req.body;
+    const userId = req.params.id;
+
+    if (note && amount && type && tags && date !== undefined) {
+        const noteChar = note.length;
+        const noteLimit = 200;
+
+        if (noteChar > noteLimit) {
+            res.status(400).send({
+                success: false,
+                message: 'Note is too long'
+            });
+        } else if (amount.type !== 'number') {
+            res.status(400).send({
+                success: false,
+                message: 'Amount is not a number'
+            });
+        } else if (type !== 'IN' || type !== 'EX') {
+            res.status(400).send({
+                success: false,
+                message: 'Type is not valid'
+            });
+        };
+
+        const newNote = {
+            "note": note,
+            "amount": amount,
+            "type": type,
+            "tags": tags,
+            "date": date
+        };
+
+        const targetNote = firestoreDB.collection(`kantongku-db/users/${userId}`).doc(`${noteId}`);
+        const checkNote = await targetNote.get();
+
+        if (checkNote.exists) {
+            await targetNote.update(newNote);
+            res.status(200).send({
+                success: true,
+                message: 'Note updated successfully'
+            });
+        } else {
+            res.status(400).send({
+                success: false,
+                message: 'Note does not exist'
+            });
+        };
+    };
+
+    res.status(400).send({
+        success: false,
+        message: 'Please provide all required fields'
+    });
+});
+
+kantonginApp.delete('/kantongku/:id', async (req, res) => {     // delete data kantongku
+    const userId = req.params.id;
+    const noteId = req.body.noteId;
+
+    const targetNote = firestoreDB.collection(`kantongku-db/users/${userId}`).doc(`${noteId}`);
+    const checkNote = await targetNote.get();
+
+    if (checkNote.exists) {
+        await targetNote.delete();
+
+        res.status(200).send({
+            success: true,
+            message: 'Note deleted successfully'
+        });
+    } else {
+        res.status(400).send({
+            success: false,
+            message: 'Note does not exist'
+        });
+    };
+});
+
+// create data wishlist (ok)
+kantonginApp.post('/wishlist/:userId', async (req, res) => {
+    const rawdata = req.body;
+    const insertedAt = new Date().toISOString();
+    const wishId = `${insertedAt}-${rawdata.type}`;
+    
+    if (rawdata.name && rawdata.quantity && rawdata.price && rawdata.date !== undefined) {
+        const nameLength = rawdata.note.length;
+
+        if (nameLength > 50) {
+            res.status(400).send({
+                status: 'fail to add wishlist',
+                message: 'wishlist name is too long'
+            });
+        };
+
+        const newData = {
+            "name": rawdata.name,
+            "quantity": rawdata.quantity,
+            "price": rawdata.price,
+            "date": rawdata.date,
+            "status": rawdata.status
+        };
+        
+    //  need to specify the document name, separated from the collection name or path 
+        await firestoreDB.collection(`wishlist-db/users/${req.params.id}`).doc(`${wishId}`).set(newData);
+        res.status(200).send({
+            status: 'success to add wishlist',
+            message: 'data has been added to database'
+        });
+    };
+
+    res.status(400).send({
+        status: 'fail to add wishlist',
+        message: 'name, quantity, price, and date is required'
+    });
+});
+
+// read data wishlist (ok)
+kantonginApp.get('/wishlist/:id', async (req, res) => {
+    const rawdata = req.params.id;
+    const snapshot = await firestoreDB.collection(`wishlist-db/users/${rawdata}`).get();
+
+    let users = [];
+    snapshot.forEach((doc) => {
+        let id = doc.id;
+        let data = doc.data();
+
+        users.push({ id, ...data });
+    });
+
+//    can't use this one below    
+//    const getAllDocument = (userId) => {
+//        const snapshot = admin.firestore().collection(`kantongku-db/users/${userId}`).get();
+//        return snapshot.docs.map(doc => doc.data());
+//    };
+
+//    const result = getAllDocument(rawdata);
+
+    res.status(200).send(JSON.stringify(users));
+});
+
+// update data wishlist (ok)
+kantonginApp.put('/wishlist/:userId', async (req, res) => {
+    const rawdata = req.body;
+    
+    const updatedData = {
+        "name": rawdata.name,
+        "quantity": rawdata.quantity,
+        "price": rawdata.price,
+        "date": rawdata.date,
+        "status": rawdata.status
+    };
+
+    await firestoreDB.collection(`wishlist-db/users/${rawdata.userId}`).doc(`${rawdata.wishId}`).update(updatedData);
+
+    res.status(200).send('Data berhasil di update!')
+});
+
+// delete data wishlist (ok)
+kantonginApp.delete('/wishlist/:userId', async (req, res) => {
+    const rawdata = req.body;
+
+    const targetData = firestoreDB.collection(`wishlist-db/users/${rawdata.userId}`).doc(`${rawdata.wishId}`);
+    const checkData = await targetData.get();
+
+    if (checkData.exists) {
+        await targetData.delete();
+
+        res.status(200).send({
+            status: 'success to delete data',
+            message: 'data has been deleted'
+        });
+    } else {
+        res.status(400).send({
+            status: 'fail to delete data',
+            message: 'data not found'
+        });
+    };
+    
+});
+
+// create data payment (ok)
+kantonginApp.post('/payment/:userId', async (req, res) => {
+    const rawdata = req.body;
+    const insertedAt = new Date().toISOString();
+    const paymentId = `${insertedAt}-${rawdata.type}`;
+    
+    if (rawdata.name && rawdata.quantity && rawdata.price && rawdata.date !== undefined) {
+        const nameLength = rawdata.note.length;
+
+        if (nameLength > 50) {
+            res.status(400).send({
+                status: 'fail to add payment',
+                message: 'payment name is too long'
+            });
+        };
+
+        const newData = {
+            "name": rawdata.name,
+            "quantity": rawdata.quantity,
+            "price": rawdata.price,
+            "date": rawdata.date,
+            "status": rawdata.status
+        };
+        
+    //  need to specify the document name, separated from the collection name or path 
+        await firestoreDB.collection(`payment-db/users/${rawdata.userId}`).doc(`${paymentId}`).set(newData);
+        res.status(200).send({
+            status: 'success to add payment',
+            message: 'data has been added to database'
+        });
+    };
+
+    res.status(400).send({
+        status: 'fail to add payment',
+        message: 'name, quantity, price, and date is required'
+    });
+});
+
+// read data payment (ok)
+kantonginApp.get('/payment/:id', async (req, res) => {
+    const rawdata = req.params.id;
+    const snapshot = await firestoreDB.collection(`payment-db/users/${rawdata}`).get();
+
+    let users = [];
+    snapshot.forEach((doc) => {
+        let id = doc.id;
+        let data = doc.data();
+
+        users.push({ id, ...data });
+    });
+
+//    can't use this one below    
+//    const getAllDocument = (userId) => {
+//        const snapshot = admin.firestore().collection(`kantongku-db/users/${userId}`).get();
+//        return snapshot.docs.map(doc => doc.data());
+//    };
+
+//    const result = getAllDocument(rawdata);
+
+    res.status(200).send(JSON.stringify(users));
+});
+
+// update data payment (ok)
+kantonginApp.put('/payment/:userId', async (req, res) => {
+    const rawdata = req.body;
+    
+    const updatedData = {
+        "name": rawdata.name,
+        "quantity": rawdata.amount,
+        "price": rawdata.type,
+        "date": rawdata.date,
+        "status": rawdata.status
+    };
+
+    await firestoreDB.collection(`payment-db/users/${rawdata.userId}`).doc(`${rawdata.paymentId}`).update(updatedData);
+
+    res.status(200).send('Data berhasil di update!')
+});
+
+// delete data payment (ok)
+kantonginApp.delete('/payment/:userId', async (req, res) => {
+    const rawdata = req.body;
+
+    const targetData = firestoreDB.collection(`payment-db/users/${rawdata.userId}`).doc(`${rawdata.paymentId}`);
+    const checkData = await targetData.get();
+
+    if (checkData.exists) {
+        await targetData.delete();
+
+        res.status(200).send({
+            status: 'success to delete data',
+            message: 'data has been deleted'
+        });
+    } else {
+        res.status(400).send({
+            status: 'fail to delete data',
+            message: 'data not found'
+        });
+    };
+});
+
+exports.kantonginAppBeta = functions.https.onRequest(kantonginApp);
+
+
