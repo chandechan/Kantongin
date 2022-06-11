@@ -18,14 +18,14 @@ const validateFirebaseIdToken = async (req, res, next) => {
     let idToken;
     if (req.headers.authorization && req.headers.authorization.startsWith('Bearer ')) {
       functions.logger.log('Found "Authorization" header');
-      // Read the ID Token from the Authorization header.
+
       idToken = req.headers.authorization.split('Bearer ')[1];
     } else if(req.cookies) {
       functions.logger.log('Found "__session" cookie');
-      // Read the ID Token from cookie.
+
       idToken = req.cookies.__session;
     } else {
-      // No cookie
+
       res.status(403).send('Unauthorized');
       return;
     }
