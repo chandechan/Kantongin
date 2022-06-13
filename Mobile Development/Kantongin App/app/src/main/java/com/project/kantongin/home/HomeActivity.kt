@@ -38,15 +38,35 @@ import retrofit2.Response
 
 class HomeActivity : BaseActivity() {
 
-    private val rotateOpen: Animation by lazy { AnimationUtils.loadAnimation(this,R.anim.rotate_open_anim) }
-    private val rotateClose: Animation by lazy { AnimationUtils.loadAnimation(this,R.anim.rotate_close_anim) }
-    private val fromBottom: Animation by lazy { AnimationUtils.loadAnimation(this,R.anim.from_bottom_anim) }
-    private val toBottom: Animation by lazy { AnimationUtils.loadAnimation(this,R.anim.to_bottom_anim) }
+    private val rotateOpen: Animation by lazy {
+        AnimationUtils.loadAnimation(
+            this,
+            R.anim.rotate_open_anim
+        )
+    }
+    private val rotateClose: Animation by lazy {
+        AnimationUtils.loadAnimation(
+            this,
+            R.anim.rotate_close_anim
+        )
+    }
+    private val fromBottom: Animation by lazy {
+        AnimationUtils.loadAnimation(
+            this,
+            R.anim.from_bottom_anim
+        )
+    }
+    private val toBottom: Animation by lazy {
+        AnimationUtils.loadAnimation(
+            this,
+            R.anim.to_bottom_anim
+        )
+    }
 
     private val binding by lazy { ActivityHomeBinding.inflate(layoutInflater) }
-    private lateinit var bindingAvatar : HomeAvatarBinding
-    private lateinit var bindingDashboard : HomeDashboardBinding
-    private lateinit var transactionAdapter : TransactionAdapter
+    private lateinit var bindingAvatar: HomeAvatarBinding
+    private lateinit var bindingDashboard: HomeDashboardBinding
+    private lateinit var transactionAdapter: TransactionAdapter
 
     private val pref by lazy { PreferenceManager(this) }
 
@@ -67,25 +87,27 @@ class HomeActivity : BaseActivity() {
         getData()
     }
 
-    private fun getAvatar(){
+    private fun getAvatar() {
         bindingAvatar.textAvatar.text = pref.getString(PrefUtil.pref_username)
         bindingAvatar.imageAvatar.setImageResource(pref.getInt(PrefUtil.pref_avatar)!!)
     }
-    private fun getBalance(){
+
+    private fun getBalance() {
         var totalIn = 0
         var totalOut = 0
         val retro = Retro().getApiService()
         pref.getString(PrefUtil.pref_email)?.let {
-            retro.getTransaction(it).enqueue(object : Callback<ArrayList<Transaction>>{
+            retro.getTransaction(it).enqueue(object : Callback<ArrayList<Transaction>> {
                 override fun onResponse(
                     call: Call<ArrayList<Transaction>>,
                     response: Response<ArrayList<Transaction>>
-                ) { response.body()!!.forEach { doc ->
-                    when(doc.type){
-                        "IN" -> totalIn += doc.amount
-                        "EX" -> totalOut += doc.amount
+                ) {
+                    response.body()!!.forEach { doc ->
+                        when (doc.type) {
+                            "IN" -> totalIn += doc.amount
+                            "EX" -> totalOut += doc.amount
+                        }
                     }
-                }
                     bindingDashboard.textBalance.text = amountFormat(totalIn - totalOut)
                     bindingDashboard.textIn.text = amountFormat(totalIn)
                     bindingDashboard.textOut.text = amountFormat(totalOut)
@@ -127,29 +149,46 @@ class HomeActivity : BaseActivity() {
 //            }
 //    }
 
-    private fun getData(){
+    private fun getData() {
         val transactions: ArrayList<Transaction> = arrayListOf()
         binding.progress.visibility = View.VISIBLE
         val retro = Retro().getApiService()
         pref.getString(PrefUtil.pref_email)?.let {
-            retro.getTransaction(it).enqueue(object : Callback<ArrayList<Transaction>>{
+            retro.getTransaction(it).enqueue(object : Callback<ArrayList<Transaction>> {
                 override fun onResponse(
                     call: Call<ArrayList<Transaction>>,
                     response: Response<ArrayList<Transaction>>
-                ) { binding.progress.visibility = View.GONE
-                    Log.d("Test",response.body().toString())
-                    response.body()!!.forEach { doc ->
-                        transactions.add(
-                            Transaction(
-                                id = doc.id,
-                                category = doc.category,
-                                type = doc.type,
-                                amount = doc.amount,
-                                note = doc.note,
-                                created = doc.created
+                ) {
+                    binding.progress.visibility = View.GONE
+                    Log.d("Test", response.body()!!.size.toString())
+                    if (response.body()!!.size <= 4) {
+                        response.body()!!.forEach { doc ->
+                            transactions.add(
+                                Transaction(
+                                    id = doc.id,
+                                    category = doc.category,
+                                    type = doc.type,
+                                    amount = doc.amount,
+                                    note = doc.note,
+                                    created = doc.created
 
+                                )
                             )
-                        )
+                        }
+                    }else {
+                        for (i in 0..3) {
+                            transactions.add(
+                                Transaction(
+                                    id = response.body()?.get(i)?.id,
+                                    category = response.body()?.get(i)!!.category,
+                                    type = response.body()?.get(i)!!.type,
+                                    amount = response.body()?.get(i)!!.amount,
+                                    note = response.body()?.get(i)!!.note,
+                                    created = response.body()?.get(i)!!.created
+
+                                )
+                            )
+                        }
                     }
                     transactionAdapter.setData(transactions)
                 }
@@ -163,50 +202,51 @@ class HomeActivity : BaseActivity() {
     }
 
 
-    private fun setupBinding(){
+    private fun setupBinding() {
         setContentView(binding.root)
         bindingAvatar = binding.includeAvatar
         bindingDashboard = binding.includeDashboard
     }
 
-    private fun setupList(){
-        transactionAdapter = TransactionAdapter(arrayListOf(), object : TransactionAdapter.AdapterListener{
-            override fun onClick(transaction: Transaction) {
-                startActivity(
-                    Intent(this@HomeActivity,UpdateActivity::class.java)
-                        .putExtra("noteId", transaction.id)
-                )
-            }
-
-            override fun onLongClick(transaction: Transaction) {
-                val alertDialog = AlertDialog.Builder(this@HomeActivity)
-                alertDialog.apply {
-                    setTitle("Hapus")
-                    setMessage("Hapus ${transaction.note} dari riwayat transaksi?")
-                    setNegativeButton("Batal") { dialogInterface, _ ->
-                        dialogInterface.dismiss()
-                    }
-                    setPositiveButton("Hapus") { dialogInterface, _ ->
-                        deleteTransaction(transaction.id!!)
-                        dialogInterface.dismiss()
-                    }
+    private fun setupList() {
+        transactionAdapter =
+            TransactionAdapter(arrayListOf(), object : TransactionAdapter.AdapterListener {
+                override fun onClick(transaction: Transaction) {
+                    startActivity(
+                        Intent(this@HomeActivity, UpdateActivity::class.java)
+                            .putExtra("noteId", transaction.id)
+                    )
                 }
-                alertDialog.show()
-            }
 
-        })
+                override fun onLongClick(transaction: Transaction) {
+                    val alertDialog = AlertDialog.Builder(this@HomeActivity)
+                    alertDialog.apply {
+                        setTitle("Hapus")
+                        setMessage("Hapus ${transaction.note} dari riwayat transaksi?")
+                        setNegativeButton("Batal") { dialogInterface, _ ->
+                            dialogInterface.dismiss()
+                        }
+                        setPositiveButton("Hapus") { dialogInterface, _ ->
+                            deleteTransaction(transaction.id!!)
+                            dialogInterface.dismiss()
+                        }
+                    }
+                    alertDialog.show()
+                }
+
+            })
         binding.listTransaction.adapter = transactionAdapter
     }
 
-    private fun setupListerner(){
+    private fun setupListerner() {
         bindingAvatar.imageAvatar.setOnClickListener {
             startActivity(
-                Intent(this,ProfileActivity::class.java)
+                Intent(this, ProfileActivity::class.java)
                     .putExtra("balance", bindingDashboard.textBalance.text.toString())
             )
         }
         binding.textTransaction.setOnClickListener {
-            startActivity(Intent(this,TransactionActivity::class.java))
+            startActivity(Intent(this, TransactionActivity::class.java))
         }
         binding.addBtn.setOnClickListener {
             onAddButtonClicked()
@@ -219,7 +259,7 @@ class HomeActivity : BaseActivity() {
         }
     }
 
-    private fun onAddButtonClicked(){
+    private fun onAddButtonClicked() {
         setVisibility(clicked)
         setAnimation(clicked)
         setClickable(clicked)
@@ -227,32 +267,32 @@ class HomeActivity : BaseActivity() {
     }
 
     private fun setVisibility(clicked: Boolean) {
-        if(!clicked){
+        if (!clicked) {
             binding.createBtn.visibility = View.VISIBLE
             binding.imgBtn.visibility = View.VISIBLE
-        }else{
+        } else {
             binding.createBtn.visibility = View.INVISIBLE
             binding.imgBtn.visibility = View.INVISIBLE
         }
     }
 
     private fun setAnimation(clicked: Boolean) {
-        if(!clicked){
+        if (!clicked) {
             binding.createBtn.startAnimation(fromBottom)
             binding.imgBtn.startAnimation(fromBottom)
             binding.addBtn.startAnimation(rotateOpen)
-        }else{
+        } else {
             binding.createBtn.startAnimation(toBottom)
             binding.imgBtn.startAnimation(toBottom)
             binding.addBtn.startAnimation(rotateClose)
         }
     }
 
-    private fun setClickable(clicked: Boolean){
-        if (!clicked){
+    private fun setClickable(clicked: Boolean) {
+        if (!clicked) {
             binding.createBtn.isClickable = true
             binding.imgBtn.isClickable = true
-        }else{
+        } else {
             binding.createBtn.isClickable = false
             binding.imgBtn.isClickable = false
         }
@@ -273,7 +313,7 @@ class HomeActivity : BaseActivity() {
         )
         val retro = Retro().getApiService()
         pref.getString(PrefUtil.pref_email)?.let { it1 ->
-            retro.deleteTransaction(delete,it1).enqueue(object : Callback<TransactionResponse> {
+            retro.deleteTransaction(delete, it1).enqueue(object : Callback<TransactionResponse> {
                 override fun onResponse(
                     call: Call<TransactionResponse>,
                     response: Response<TransactionResponse>

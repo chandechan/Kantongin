@@ -15,10 +15,21 @@ import com.project.kantongin.base.BaseActivity
 import com.project.kantongin.create.UpdateActivity
 import com.project.kantongin.databinding.ActivityTransactionBinding
 import com.project.kantongin.fragment.DateFragment
+import com.project.kantongin.model.DeleteData
 import com.project.kantongin.model.Transaction
+import com.project.kantongin.model.TransactionResponse
 import com.project.kantongin.prefrences.PreferenceManager
+import com.project.kantongin.retrofit.Retro
 import com.project.kantongin.util.PrefUtil
-import com.project.kantongin.util.stringToTimestamp
+import com.project.kantongin.util.timestampToString
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
+import java.text.SimpleDateFormat
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
+import java.util.*
+import kotlin.collections.ArrayList
 
 class TransactionActivity : BaseActivity() {
 
@@ -79,17 +90,18 @@ class TransactionActivity : BaseActivity() {
                 override fun onSuccsess(dateStart: String, dateEnd: String) {
                     Log.e("TransactionActivity", "$dateStart, $dateEnd")
                     binding.textTransaction.text = "$dateStart - $dateEnd"
-                    db.collection("transaction")
-                        .orderBy("created", Query.Direction.DESCENDING)
-                        .whereEqualTo("username", pref.getString(PrefUtil.pref_username))
-                        .whereGreaterThanOrEqualTo("created", stringToTimestamp("$dateStart 00:00")!!)
-                        .whereLessThanOrEqualTo("created", stringToTimestamp("$dateEnd 23:59")!!)
-                        .limit(50)
-                        .get()
-                        .addOnSuccessListener { result ->
-                            binding.swipe.isRefreshing = false
-                            setTransaction(result)
-                        }
+                    setTransaction(dateStart, dateEnd)
+//                    db.collection("transaction")
+//                        .orderBy("created", Query.Direction.DESCENDING)
+//                        .whereEqualTo("username", pref.getString(PrefUtil.pref_username))
+//                        .whereGreaterThanOrEqualTo("created", stringToTimestamp("$dateStart 00:00")!!)
+//                        .whereLessThanOrEqualTo("created", stringToTimestamp("$dateEnd 23:59")!!)
+//                        .limit(50)
+//                        .get()
+//                        .addOnSuccessListener { result ->
+//                            binding.swipe.isRefreshing = false
+
+//                        }
                 }
 
             }).apply {
@@ -97,43 +109,134 @@ class TransactionActivity : BaseActivity() {
             }
         }
     }
-    private fun getData(){
-        binding.swipe.isRefreshing = true
-        db.collection("transaction")
-            .orderBy("created", Query.Direction.DESCENDING)
-            .whereEqualTo("username", pref.getString(PrefUtil.pref_username))
-            .limit(50)
-            .get()
-            .addOnSuccessListener { result ->
-                binding.swipe.isRefreshing = false
-                setTransaction(result)
-            }
-    }
 
-    private fun setTransaction(result: QuerySnapshot){
+
+    private fun getData() {
         val transactions: ArrayList<Transaction> = arrayListOf()
-        result.forEach { doc ->
-            transactions.add(
-                Transaction(
-                    id = doc.reference.id,
-                    category = doc.data["category"].toString(),
-                    type = doc.data["type"].toString(),
-                    amount = doc.data["amount"].toString().toInt(),
-                    note = doc.data["note"].toString(),
-                    created = doc.data["created"] as Timestamp
+        val retro = Retro().getApiService()
+        pref.getString(PrefUtil.pref_email)?.let {
+            retro.getTransaction(it).enqueue(object : Callback<ArrayList<Transaction>> {
+                override fun onResponse(
+                    call: Call<ArrayList<Transaction>>,
+                    response: Response<ArrayList<Transaction>>
+                ) {
+                    Log.d("Test", response.body()!!.size.toString())
+                    binding.swipe.isRefreshing = false
+                        response.body()!!.forEach { doc ->
+                            transactions.add(
+                                Transaction(
+                                    id = doc.id,
+                                    category = doc.category,
+                                    type = doc.type,
+                                    amount = doc.amount,
+                                    note = doc.note,
+                                    created = doc.created
 
-                )
-            )
+                                )
+                            )
+                        }
+                    transactionAdapter.setData(transactions)
+                }
+
+                override fun onFailure(call: Call<ArrayList<Transaction>>, t: Throwable) {
+                    Log.e("Gagal", t.message.toString())
+                }
+
+            })
         }
-        transactionAdapter.setData(transactions)
     }
 
-    private fun deleteTransaction(id: String){
-        db.collection("transaction")
-            .document(id)
-            .delete()
-            .addOnSuccessListener {
-                getData()
-            }
+//    private fun getData(){
+//        binding.swipe.isRefreshing = true
+//        db.collection("transaction")
+//            .orderBy("created", Query.Direction.DESCENDING)
+//            .whereEqualTo("username", pref.getString(PrefUtil.pref_username))
+//            .limit(50)
+//            .get()
+//            .addOnSuccessListener { result ->
+//                binding.swipe.isRefreshing = false
+//                setTransaction(result)
+//            }
+//    }
+
+    fun setTransaction(dateStart: String, dateEnd: String){
+        val formatter = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
+        val dateStartStamp: Date = formatter.parse(dateStart)
+        val dateEndStamp : Date = formatter.parse(dateEnd)
+        val transactions: ArrayList<Transaction> = arrayListOf()
+        val retro = Retro().getApiService()
+        pref.getString(PrefUtil.pref_email)?.let {
+            retro.getTransaction(it).enqueue(object : Callback<ArrayList<Transaction>> {
+                override fun onResponse(
+                    call: Call<ArrayList<Transaction>>,
+                    response: Response<ArrayList<Transaction>>
+                ) {
+                    Log.d("Test", response.body()!!.size.toString())
+                    binding.swipe.isRefreshing = false
+                    response.body()!!.forEach { doc ->
+                        val createdDate = formatter.parse(doc.created?.let { it1 ->
+                            timestampToString(
+                                it1
+                            )
+                        })
+                        if (createdDate.before(dateStartStamp)&&createdDate.after(dateEndStamp)) {
+                            transactions.add(
+                                Transaction(
+                                    id = doc.id,
+                                    category = doc.category,
+                                    type = doc.type,
+                                    amount = doc.amount,
+                                    note = doc.note,
+                                    created = doc.created
+
+                                )
+                            )
+                        }
+                    }
+                    transactionAdapter.setData(transactions)
+                }
+
+                override fun onFailure(call: Call<ArrayList<Transaction>>, t: Throwable) {
+                    Log.e("Gagal", t.message.toString())
+                }
+
+            })
+        }
+//        val transactions: ArrayList<Transaction> = arrayListOf()
+//        result.forEach { doc ->
+//            transactions.add(
+//                Transaction(
+//                    id = doc.reference.id,
+//                    category = doc.data["category"].toString(),
+//                    type = doc.data["type"].toString(),
+//                    amount = doc.data["amount"].toString().toInt(),
+//                    note = doc.data["note"].toString(),
+//                    created = doc.data["created"] as Timestamp
+//
+//                )
+//            )
+//        }
+//        transactionAdapter.setData(transactions)
+    }
+
+    private fun deleteTransaction(id: String) {
+        val delete = DeleteData(
+            noteId = id
+        )
+        val retro = Retro().getApiService()
+        pref.getString(PrefUtil.pref_email)?.let { it1 ->
+            retro.deleteTransaction(delete,it1).enqueue(object : Callback<TransactionResponse> {
+                override fun onResponse(
+                    call: Call<TransactionResponse>,
+                    response: Response<TransactionResponse>
+                ) {
+                    getData()
+                }
+
+                override fun onFailure(call: Call<TransactionResponse>, t: Throwable) {
+                    TODO("Not yet implemented")
+                }
+            })
+        }
     }
 }
